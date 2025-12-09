@@ -11,15 +11,6 @@ const issueFixingService = {
 
   saveAdminData: (data) => axios.post(`${API_URL}/admin/issue-fixing`, data, {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  }),
-
-  // SEO API
-  getSeo: () => axios.get(`${API_URL}/admin/issue-fixing/seo`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  }),
-
-  updateSeo: (data) => axios.put(`${API_URL}/admin/issue-fixing/seo`, data, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   })
 };
 

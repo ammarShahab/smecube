@@ -11,9 +11,7 @@ import IssueFixingIconSelector from '../../../components/admin/IssueFixingIconSe
 
 const AdminIssueFixing = () => {
   const [data, setData] = useState(null);
-  const [seoData, setSeoData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState("hero");
 
@@ -33,8 +31,7 @@ const tabs = [
   { id: "processSteps", name: "প্রসেস স্টেপস", icon: "📝" },
   { id: "packages", name: "প্যাকেজসমূহ", icon: "🎁" },
   { id: "technologies", name: "টেকনোলজি", icon: "💻" },
-  { id: "cta", name: "CTA", icon: "📞" },
-  { id: "seo", name: "SEO সেটিংস", icon: "🔍" }
+  { id: "cta", name: "CTA", icon: "📞" }
 ];
 
 
@@ -44,13 +41,8 @@ const tabs = [
 
   const loadData = async () => {
     try {
-      const [adminRes, seoRes] = await Promise.all([
-        issueFixingService.getAdminData(),
-        issueFixingService.getSeo()
-      ]);
-      setData(adminRes.data);
-      const seoResponseData = seoRes.data?.data || seoRes.data || {};
-      setSeoData(seoResponseData);
+      const response = await issueFixingService.getAdminData();
+      setData(response.data);
       setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
@@ -151,72 +143,6 @@ const tabs = [
       console.error('Save error:', err);
       const errorMsg = err.response?.data?.message || err.message || 'Unknown error';
       showToast(`সেভ করতে সমস্যা: ${errorMsg}`, "error");
-    }
-  };
-
-  // ==================== SEO FUNCTIONS ====================
-  const getDefaultSeoData = () => ({
-    meta_title: 'ইস্যু ফিক্সিং সার্ভিস - SME CUBE',
-    meta_description: 'সব ধরনের প্রযুক্তিগত সমস্যার দ্রুত এবং নির্ভরযোগ্য সমাধান।',
-    meta_keywords: 'ইস্যু ফিক্সিং, টেকনিক্যাল সাপোর্ট, সফটওয়্যার সমাধান, বাগ ফিক্স',
-    og_image: '',
-    canonical_url: '',
-    focus_keyword: 'ইস্যু ফিক্সিং সার্ভিস',
-    schema_type: 'Service',
-    meta_robots_index: true,
-    meta_robots_follow: true,
-    twitter_card: 'summary_large_image',
-    og_type: 'website',
-    og_locale: 'bn_BD',
-    sitemap_priority: 0.85,
-    change_frequency: 'weekly',
-    faq_items: []
-  });
-
-  const updateSeoField = (field, value) => {
-    setSeoData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const addFaqItem = () => {
-    setSeoData(prev => ({
-      ...prev,
-      faq_items: [...(prev.faq_items || []), { question: 'নতুন প্রশ্ন', answer: 'উত্তর' }]
-    }));
-  };
-
-  const updateFaqItem = (index, field, value) => {
-    setSeoData(prev => {
-      const items = [...(prev.faq_items || [])];
-      items[index] = { ...items[index], [field]: value };
-      return { ...prev, faq_items: items };
-    });
-  };
-
-  const removeFaqItem = (index) => {
-    setSeoData(prev => ({
-      ...prev,
-      faq_items: (prev.faq_items || []).filter((_, i) => i !== index)
-    }));
-  };
-
-  const saveSeo = async () => {
-    if (!seoData) {
-      showToast('SEO ডেটা খুঁজে পাওয়া যায়নি', 'error');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await issueFixingService.updateSeo(seoData);
-      showToast('SEO ডেটা সফলভাবে সেভ হয়েছে!', 'success');
-    } catch (err) {
-      console.error('SEO save error:', err);
-      showToast(`SEO সেভ করতে সমস্যা: ${err.response?.data?.message || err.message}`, 'error');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -807,209 +733,6 @@ case "technologies":
           </div>
         );
 
-      case "seo":
-        return (
-          <div className="space-y-6">
-            {!seoData && (
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-blue-700">
-                <p>SEO ডেটা লোড হচ্ছে...</p>
-              </div>
-            )}
-
-            {seoData && (
-              <>
-                {/* ====== BASIC SEO ====== */}
-                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-blue-50 to-indigo-50">
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                    <span className="text-xl">📝</span> মৌলিক SEO
-                  </h3>
-                  <div className="space-y-4">
-                    <Input 
-                      label="Meta Title (60 অক্ষর)" 
-                      value={seoData.meta_title || ""} 
-                      onChange={v => updateSeoField('meta_title', v)}
-                    />
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Meta Description (160 অক্ষর)</label>
-                      <textarea 
-                        value={seoData.meta_description || ""} 
-                        onChange={e => updateSeoField('meta_description', e.target.value)}
-                        className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                        rows="3"
-                      />
-                    </div>
-                    <Input 
-                      label="Focus Keyword" 
-                      value={seoData.focus_keyword || ""} 
-                      onChange={v => updateSeoField('focus_keyword', v)}
-                    />
-                    <Input 
-                      label="Meta Keywords" 
-                      value={seoData.meta_keywords || ""} 
-                      onChange={v => updateSeoField('meta_keywords', v)}
-                    />
-                  </div>
-                </div>
-
-                {/* ====== OPEN GRAPH ====== */}
-                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-purple-50 to-pink-50">
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                    <span className="text-xl">🌐</span> Open Graph
-                  </h3>
-                  <div className="space-y-4">
-                    <Input 
-                      label="OG Title" 
-                      value={seoData.og_title || ""} 
-                      onChange={v => updateSeoField('og_title', v)}
-                    />
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">OG Description</label>
-                      <textarea 
-                        value={seoData.og_description || ""} 
-                        onChange={e => updateSeoField('og_description', e.target.value)}
-                        className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                        rows="2"
-                      />
-                    </div>
-                    <Input 
-                      label="OG Image URL" 
-                      value={seoData.og_image || ""} 
-                      onChange={v => updateSeoField('og_image', v)}
-                    />
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <Input 
-                        label="OG Type" 
-                        value={seoData.og_type || "website"} 
-                        onChange={v => updateSeoField('og_type', v)}
-                      />
-                      <Input 
-                        label="OG Locale" 
-                        value={seoData.og_locale || "bn_BD"} 
-                        onChange={v => updateSeoField('og_locale', v)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* ====== ADVANCED SEO ====== */}
-                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-green-50 to-emerald-50">
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                    <span className="text-xl">⚙️</span> উন্নত SEO
-                  </h3>
-                  <div className="space-y-4">
-                    <Input 
-                      label="Canonical URL" 
-                      value={seoData.canonical_url || ""} 
-                      onChange={v => updateSeoField('canonical_url', v)}
-                    />
-                    <Input 
-                      label="Schema Type" 
-                      value={seoData.schema_type || "Service"} 
-                      onChange={v => updateSeoField('schema_type', v)}
-                    />
-                    <Input 
-                      label="Twitter Card" 
-                      value={seoData.twitter_card || "summary_large_image"} 
-                      onChange={v => updateSeoField('twitter_card', v)}
-                    />
-                    <div className="grid md:grid-cols-2 gap-3">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={seoData.meta_robots_index !== false} 
-                          onChange={e => updateSeoField('meta_robots_index', e.target.checked)}
-                          className="h-4 w-4"
-                        />
-                        <span className="text-sm font-medium">Meta Robots Index</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={seoData.meta_robots_follow !== false} 
-                          onChange={e => updateSeoField('meta_robots_follow', e.target.checked)}
-                          className="h-4 w-4"
-                        />
-                        <span className="text-sm font-medium">Meta Robots Follow</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ====== SITEMAP ====== */}
-                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-orange-50 to-yellow-50">
-                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
-                    <span className="text-xl">🗺️</span> Sitemap
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <Input 
-                      label="Sitemap Priority (0-1)" 
-                      type="number" 
-                      value={seoData.sitemap_priority || 0.85} 
-                      onChange={v => updateSeoField('sitemap_priority', parseFloat(v))}
-                    />
-                    <Input 
-                      label="Change Frequency" 
-                      value={seoData.change_frequency || "weekly"} 
-                      onChange={v => updateSeoField('change_frequency', v)}
-                    />
-                  </div>
-                </div>
-
-                {/* ====== FAQ SCHEMA ====== */}
-                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-cyan-50 to-blue-50">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                      <span className="text-xl">❓</span> FAQ Schema
-                    </h3>
-                    <button 
-                      onClick={addFaqItem}
-                      className="px-3 py-1.5 bg-orange-600 text-white rounded text-sm hover:bg-orange-700 flex items-center gap-1"
-                    >
-                      <Plus className="h-4 w-4" /> নতুন FAQ যোগ করুন
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {(seoData.faq_items || []).map((faq, idx) => (
-                      <div key={idx} className="border border-gray-200 rounded p-4 bg-white">
-                        <div className="flex justify-between mb-3">
-                          <h4 className="font-medium text-gray-700">প্রশ্ন #{idx + 1}</h4>
-                          <button 
-                            onClick={() => removeFaqItem(idx)}
-                            className="text-red-600 hover:bg-red-50 p-1 rounded"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <Input 
-                          label="প্রশ্ন" 
-                          value={faq.question || ""} 
-                          onChange={v => updateFaqItem(idx, 'question', v)}
-                        />
-                        <div className="mt-2">
-                          <label className="mb-1 block text-sm font-medium text-gray-700">উত্তর</label>
-                          <textarea 
-                            value={faq.answer || ""} 
-                            onChange={e => updateFaqItem(idx, 'answer', e.target.value)}
-                            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                            rows="2"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Save Button */}
-                <SaveBtn 
-                  onClick={saveSeo} 
-                  disabled={saving}
-                  label={saving ? "সেভ হচ্ছে..." : "SEO সেটিংস সেভ করুন"}
-                />
-              </>
-            )}
-          </div>
-        );
-
       default:
         return (
           <div className="text-center py-8 text-gray-500">
@@ -1106,13 +829,12 @@ const Input = ({ label, value, onChange, placeholder, icon }) => (
   </div>
 );
 
-const SaveBtn = ({ onClick, disabled, label }) => (
+const SaveBtn = ({ onClick }) => (
   <button
     onClick={onClick}
-    disabled={disabled}
-    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 py-2.5 font-medium text-white hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 py-2.5 font-medium text-white hover:shadow-md"
   >
-    <Save className="h-5 w-5" /> {label || "এই সেকশন সেভ করুন"}
+    <Save className="h-5 w-5" /> এই সেকশন সেভ করুন
   </button>
 );
 
