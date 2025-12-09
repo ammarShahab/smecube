@@ -1,10 +1,31 @@
 // src/pages/admin/dashboard/AdminChatbotSetup.jsx
 import React, { useEffect, useState } from "react";
 import {
-  Save, Plus, Trash2,
-  Bot, MessageCircle, Target, BarChart3, Globe, Zap, CheckCircle, XCircle,
-  BookOpen, Camera, Send, Circle, Puzzle, HelpCircle, Calendar,
-  ShoppingCart, Headphones, Palette, ArrowRight, Settings, Layers, Link
+  Save,
+  Plus,
+  Trash2,
+  Bot,
+  MessageCircle,
+  Target,
+  BarChart3,
+  Globe,
+  Zap,
+  CheckCircle,
+  XCircle,
+  BookOpen,
+  Camera,
+  Send,
+  Circle,
+  Puzzle,
+  HelpCircle,
+  Calendar,
+  ShoppingCart,
+  Headphones,
+  Palette,
+  ArrowRight,
+  Settings,
+  Layers,
+  Link,
 } from "lucide-react";
 import chatbotService from "../../../services/chatbotService.js";
 import IconLibrary from "../../../components/admin/IconLibrary.jsx";
@@ -13,7 +34,13 @@ import ChatbotSetupIconSelector from "../../../components/admin/ChatbotSetupIcon
 
 // === ICON MAPPING ===
 const ICONS = {
-  Bot, MessageCircle, Target, BarChart3, Globe, Zap, CheckCircle,
+  Bot,
+  MessageCircle,
+  Target,
+  BarChart3,
+  Globe,
+  Zap,
+  CheckCircle,
   messenger: BookOpen,
   whatsapp: MessageCircle,
   website: Globe,
@@ -33,12 +60,24 @@ const ICONS = {
 };
 
 // === DEFAULTS ===
-const defaultHero = { title: "", description: "", ctaPrimary: "", ctaSecondary: "" };
-const defaultCta = { title: "", description: "", ctaPrimary: "", ctaSecondary: "" };
+const defaultHero = {
+  title: "",
+  description: "",
+  ctaPrimary: "",
+  ctaSecondary: "",
+};
+const defaultCta = {
+  title: "",
+  description: "",
+  ctaPrimary: "",
+  ctaSecondary: "",
+};
 
 const AdminChatbotSetup = () => {
   const [data, setData] = useState(null);
+  const [seoData, setSeoData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState("hero");
 
@@ -51,30 +90,44 @@ const AdminChatbotSetup = () => {
     { id: "chatbotFeatures", name: "ফিচার ব্রেকডাউন", icon: "💬" },
     { id: "designShowcase", name: "ডিজাইন শোকেস", icon: "🎨" },
     { id: "packages", name: "প্যাকেজসমূহ", icon: "📦" },
-    { id: "cta", name: "CTA", icon: "✅" }
+    { id: "cta", name: "CTA", icon: "✅" },
+    { id: "seo", name: "SEO সেটিংস", icon: "🔍" },
   ];
 
   useEffect(() => {
-    chatbotService.getAdminData()
-      .then(res => {
-        // Handle wrapped response structure: {success: true, data: {...}}
-        const apiData = res.data?.data || res.data || {};
+    Promise.all([chatbotService.getAdminData(), chatbotService.getSeo()])
+      .then(([adminRes, seoRes]) => {
+        // Handle wrapped response structure for admin data
+        const apiData = adminRes.data?.data || adminRes.data || {};
 
         setData({
           hero: { ...defaultHero, ...(apiData.hero || {}) },
           features: Array.isArray(apiData.features) ? apiData.features : [],
           platforms: Array.isArray(apiData.platforms) ? apiData.platforms : [],
-          chatbotTypes: Array.isArray(apiData.chatbotTypes) ? apiData.chatbotTypes : [],
-          setupSteps: Array.isArray(apiData.setupSteps) ? apiData.setupSteps : [],
-          chatbotFeatures: Array.isArray(apiData.chatbotFeatures) ? apiData.chatbotFeatures : [],
-          designShowcase: Array.isArray(apiData.designShowcase) ? apiData.designShowcase : [],
+          chatbotTypes: Array.isArray(apiData.chatbotTypes)
+            ? apiData.chatbotTypes
+            : [],
+          setupSteps: Array.isArray(apiData.setupSteps)
+            ? apiData.setupSteps
+            : [],
+          chatbotFeatures: Array.isArray(apiData.chatbotFeatures)
+            ? apiData.chatbotFeatures
+            : [],
+          designShowcase: Array.isArray(apiData.designShowcase)
+            ? apiData.designShowcase
+            : [],
           packages: Array.isArray(apiData.packages) ? apiData.packages : [],
           cta: { ...defaultCta, ...(apiData.cta || {}) },
         });
+
+        // Handle SEO data
+        const seoResponseData = seoRes.data?.data || seoRes.data || {};
+        setSeoData(seoResponseData);
+
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Load error:', err);
+      .catch((err) => {
+        console.error("Load error:", err);
         setLoading(false);
         showToast("লোড করতে সমস্যা!", "error");
       });
@@ -85,30 +138,34 @@ const AdminChatbotSetup = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const updateSection = (sec, val) => setData(prev => ({ ...prev, [sec]: val }));
+  const updateSection = (sec, val) =>
+    setData((prev) => ({ ...prev, [sec]: val }));
 
-  const updateItem = (sec, idx, field, val) => setData(prev => {
-    const arr = [...(prev[sec] || [])];
-    arr[idx] = { ...arr[idx], [field]: val };
-    return { ...prev, [sec]: arr };
-  });
+  const updateItem = (sec, idx, field, val) =>
+    setData((prev) => {
+      const arr = [...(prev[sec] || [])];
+      arr[idx] = { ...arr[idx], [field]: val };
+      return { ...prev, [sec]: arr };
+    });
 
-  const addItem = (sec, def) => setData(prev => ({
-    ...prev,
-    [sec]: [...(prev[sec] || []), def]
-  }));
+  const addItem = (sec, def) =>
+    setData((prev) => ({
+      ...prev,
+      [sec]: [...(prev[sec] || []), def],
+    }));
 
-  const removeItem = (sec, idx) => setData(prev => ({
-    ...prev,
-    [sec]: (prev[sec] || []).filter((_, i) => i !== idx)
-  }));
+  const removeItem = (sec, idx) =>
+    setData((prev) => ({
+      ...prev,
+      [sec]: (prev[sec] || []).filter((_, i) => i !== idx),
+    }));
 
   const saveSection = async (sec) => {
     let payload = { [sec]: data[sec] || [] };
 
     if (Array.isArray(payload[sec])) {
       payload[sec] = payload[sec]
-        .map(item => {
+        .map((item) => {
           const cleaned = {};
           for (const key in item) {
             const val = item[key];
@@ -116,7 +173,7 @@ const AdminChatbotSetup = () => {
               cleaned[key] = val;
             } else if (val && val !== "" && val !== null && val !== undefined) {
               if (Array.isArray(val)) {
-                const filteredArray = val.filter(v => v && v !== "");
+                const filteredArray = val.filter((v) => v && v !== "");
                 if (filteredArray.length > 0) cleaned[key] = filteredArray;
               } else {
                 cleaned[key] = val;
@@ -125,32 +182,44 @@ const AdminChatbotSetup = () => {
           }
           return cleaned;
         })
-        .filter(item => {
+        .filter((item) => {
           const keys = Object.keys(item);
-          return keys.length > 0 && keys.some(k =>
-            (k !== 'icon' && k !== 'id') ||
-            (k === 'icon' && item[k]) ||
-            (k === 'id' && item[k])
+          return (
+            keys.length > 0 &&
+            keys.some(
+              (k) =>
+                (k !== "icon" && k !== "id") ||
+                (k === "icon" && item[k]) ||
+                (k === "id" && item[k])
+            )
           );
         });
     }
 
     if (sec === "packages") {
       payload[sec] = payload[sec]
-        .map(pkg => {
+        .map((pkg) => {
           const cleanedPkg = {};
           if (pkg.name?.trim()) cleanedPkg.name = pkg.name.trim();
           if (pkg.price?.trim()) cleanedPkg.price = pkg.price.trim();
           if (pkg.duration?.trim()) cleanedPkg.duration = pkg.duration.trim();
-          if (pkg.orderLink?.trim()) cleanedPkg.orderLink = pkg.orderLink.trim();
+          if (pkg.orderLink?.trim())
+            cleanedPkg.orderLink = pkg.orderLink.trim();
           cleanedPkg.popular = !!pkg.popular;
           if (Array.isArray(pkg.features)) {
-            const validFeatures = pkg.features.filter(f => f?.trim());
+            const validFeatures = pkg.features.filter((f) => f?.trim());
             if (validFeatures.length > 0) cleanedPkg.features = validFeatures;
           }
           return cleanedPkg;
         })
-        .filter(pkg => pkg.name || pkg.price || pkg.duration || pkg.orderLink || (pkg.features?.length > 0));
+        .filter(
+          (pkg) =>
+            pkg.name ||
+            pkg.price ||
+            pkg.duration ||
+            pkg.orderLink ||
+            pkg.features?.length > 0
+        );
     }
 
     if (Array.isArray(payload[sec]) && payload[sec].length === 0) {
@@ -163,37 +232,119 @@ const AdminChatbotSetup = () => {
       showToast(`${sec} সেভ হয়েছে!`, "success");
     } catch (err) {
       console.error(err);
-      showToast(`সেভ করতে সমস্যা: ${err.response?.data?.message || 'Unknown'}`, "error");
+      showToast(
+        `সেভ করতে সমস্যা: ${err.response?.data?.message || "Unknown"}`,
+        "error"
+      );
     }
   };
 
-  const addPkg = () => addItem("packages", {
-    name: "নতুন প্যাকেজ", 
-    price: "০", 
-    duration: "মাস", 
-    orderLink: "",
-    popular: false, 
-    features: []
+  const addPkg = () =>
+    addItem("packages", {
+      name: "নতুন প্যাকেজ",
+      price: "০",
+      duration: "মাস",
+      orderLink: "",
+      popular: false,
+      features: [],
+    });
+
+  const addPkgFeat = (pkgIdx) =>
+    setData((prev) => {
+      const pkgs = [...(prev.packages || [])];
+      pkgs[pkgIdx].features = [...(pkgs[pkgIdx].features || []), "নতুন ফিচার"];
+      return { ...prev, packages: pkgs };
+    });
+
+  const updatePkgFeat = (pkgIdx, fi, val) =>
+    setData((prev) => {
+      const pkgs = [...(prev.packages || [])];
+      pkgs[pkgIdx].features = [...(pkgs[pkgIdx].features || [])];
+      pkgs[pkgIdx].features[fi] = val;
+      return { ...prev, packages: pkgs };
+    });
+
+  const removePkgFeat = (pkgIdx, fi) =>
+    setData((prev) => {
+      const pkgs = [...(prev.packages || [])];
+      pkgs[pkgIdx].features = (pkgs[pkgIdx].features || []).filter(
+        (_, i) => i !== fi
+      );
+      return { ...prev, packages: pkgs };
+    });
+
+  // ==================== SEO FUNCTIONS ====================
+  const getDefaultSeoData = () => ({
+    meta_title: "এআই চ্যাটবট সলিউশন - SME CUBE",
+    meta_description:
+      "স্মার্ট এআই চ্যাটবট যা আপনার ব্যবসার গ্রাহক সেবা স্বয়ংক্রিয় করে।",
+    meta_keywords: "এআই চ্যাটবট, গ্রাহক সেবা, অটোমেশন, চ্যাটবট সফটওয়্যার",
+    og_image: "",
+    canonical_url: "",
+    focus_keyword: "এআই চ্যাটবট সলিউশন",
+    schema_type: "SoftwareApplication",
+    meta_robots_index: true,
+    meta_robots_follow: true,
+    twitter_card: "summary_large_image",
+    og_type: "website",
+    og_locale: "bn_BD",
+    sitemap_priority: 0.9,
+    change_frequency: "weekly",
+    faq_items: [],
   });
 
-  const addPkgFeat = (pkgIdx) => setData(prev => {
-    const pkgs = [...(prev.packages || [])];
-    pkgs[pkgIdx].features = [...(pkgs[pkgIdx].features || []), "নতুন ফিচার"];
-    return { ...prev, packages: pkgs };
-  });
+  const updateSeoField = (field, value) => {
+    setSeoData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-  const updatePkgFeat = (pkgIdx, fi, val) => setData(prev => {
-    const pkgs = [...(prev.packages || [])];
-    pkgs[pkgIdx].features = [...(pkgs[pkgIdx].features || [])];
-    pkgs[pkgIdx].features[fi] = val;
-    return { ...prev, packages: pkgs };
-  });
+  const addFaqItem = () => {
+    setSeoData((prev) => ({
+      ...prev,
+      faq_items: [
+        ...(prev.faq_items || []),
+        { question: "নতুন প্রশ্ন", answer: "উত্তর" },
+      ],
+    }));
+  };
 
-  const removePkgFeat = (pkgIdx, fi) => setData(prev => {
-    const pkgs = [...(prev.packages || [])];
-    pkgs[pkgIdx].features = (pkgs[pkgIdx].features || []).filter((_, i) => i !== fi);
-    return { ...prev, packages: pkgs };
-  });
+  const updateFaqItem = (index, field, value) => {
+    setSeoData((prev) => {
+      const items = [...(prev.faq_items || [])];
+      items[index] = { ...items[index], [field]: value };
+      return { ...prev, faq_items: items };
+    });
+  };
+
+  const removeFaqItem = (index) => {
+    setSeoData((prev) => ({
+      ...prev,
+      faq_items: (prev.faq_items || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const saveSeo = async () => {
+    if (!seoData) {
+      showToast("SEO ডেটা খুঁজে পাওয়া যায়নি", "error");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await chatbotService.updateSeo(seoData);
+      showToast("SEO ডেটা সফলভাবে সেভ হয়েছে!", "success");
+    } catch (err) {
+      console.error("SEO save error:", err);
+      showToast(
+        `SEO সেভ করতে সমস্যা: ${err.response?.data?.message || err.message}`,
+        "error"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Render icon based on type (SVG or Lucide)
   const renderIcon = (iconName, size = 24, className = "text-blue-600") => {
@@ -219,7 +370,9 @@ const AdminChatbotSetup = () => {
   if (!data) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-2xl font-semibold text-red-600">ডেটা লোড করা যায়নি</div>
+        <div className="text-2xl font-semibold text-red-600">
+          ডেটা লোড করা যায়নি
+        </div>
       </div>
     );
   }
@@ -230,10 +383,34 @@ const AdminChatbotSetup = () => {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Input label="শিরোনাম" value={data.hero?.title || ""} onChange={v => updateSection("hero", { ...data.hero, title: v })} />
-              <Input label="বিবরণ" value={data.hero?.description || ""} onChange={v => updateSection("hero", { ...data.hero, description: v })} />
-              <Input label="প্রাথমিক CTA" value={data.hero?.ctaPrimary || ""} onChange={v => updateSection("hero", { ...data.hero, ctaPrimary: v })} />
-              <Input label="সেকেন্ডারি CTA" value={data.hero?.ctaSecondary || ""} onChange={v => updateSection("hero", { ...data.hero, ctaSecondary: v })} />
+              <Input
+                label="শিরোনাম"
+                value={data.hero?.title || ""}
+                onChange={(v) =>
+                  updateSection("hero", { ...data.hero, title: v })
+                }
+              />
+              <Input
+                label="বিবরণ"
+                value={data.hero?.description || ""}
+                onChange={(v) =>
+                  updateSection("hero", { ...data.hero, description: v })
+                }
+              />
+              <Input
+                label="প্রাথমিক CTA"
+                value={data.hero?.ctaPrimary || ""}
+                onChange={(v) =>
+                  updateSection("hero", { ...data.hero, ctaPrimary: v })
+                }
+              />
+              <Input
+                label="সেকেন্ডারি CTA"
+                value={data.hero?.ctaSecondary || ""}
+                onChange={(v) =>
+                  updateSection("hero", { ...data.hero, ctaSecondary: v })
+                }
+              />
             </div>
             <SaveBtn onClick={() => saveSection("hero")} />
           </div>
@@ -247,31 +424,55 @@ const AdminChatbotSetup = () => {
                 <div key={i} className="rounded-lg border border-gray-200 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h4 className="font-medium">ফিচার #{i + 1}</h4>
-                    <button onClick={() => removeItem("features", i)} className="rounded p-1 text-red-500 hover:bg-red-50">
+                    <button
+                      onClick={() => removeItem("features", i)}
+                      className="rounded p-1 text-red-500 hover:bg-red-50"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">আইকন</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        আইকন
+                      </label>
                       <div className="flex items-center gap-2">
                         <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
                           {renderIcon(f.icon, 6)}
                         </div>
                         <IconSelector
                           value={f.icon}
-                          onChange={v => updateItem("features", i, "icon", v)}
+                          onChange={(v) => updateItem("features", i, "icon", v)}
                           label=""
                           className="flex-1"
                         />
                       </div>
                     </div>
-                    <Input label="শিরোনাম" value={f.title || ""} onChange={v => updateItem("features", i, "title", v)} />
-                    <Input label="বিবরণ" value={f.description || ""} onChange={v => updateItem("features", i, "description", v)} />
+                    <Input
+                      label="শিরোনাম"
+                      value={f.title || ""}
+                      onChange={(v) => updateItem("features", i, "title", v)}
+                    />
+                    <Input
+                      label="বিবরণ"
+                      value={f.description || ""}
+                      onChange={(v) =>
+                        updateItem("features", i, "description", v)
+                      }
+                    />
                   </div>
                 </div>
               ))}
-              <button onClick={() => addItem("features", { icon: "Bot", title: "নতুন ফিচার", description: "বিবরণ" })} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50">
+              <button
+                onClick={() =>
+                  addItem("features", {
+                    icon: "Bot",
+                    title: "নতুন ফিচার",
+                    description: "বিবরণ",
+                  })
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50"
+              >
                 <Plus className="h-4 w-4" /> নতুন ফিচার যোগ করুন
               </button>
             </div>
@@ -287,29 +488,44 @@ const AdminChatbotSetup = () => {
                 <div key={i} className="rounded-lg border p-4">
                   <div className="mb-3 flex justify-between">
                     <h4>প্ল্যাটফর্ম #{i + 1}</h4>
-                    <button onClick={() => removeItem("platforms", i)} className="text-red-500">
+                    <button
+                      onClick={() => removeItem("platforms", i)}
+                      className="text-red-500"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">প্ল্যাটফর্ম আইকন</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        প্ল্যাটফর্ম আইকন
+                      </label>
                       <div className="flex items-center gap-2">
                         <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
                           {renderIcon(p.icon, 6)}
                         </div>
                         <IconSelector
                           value={p.icon}
-                          onChange={v => updateItem("platforms", i, "icon", v)}
+                          onChange={(v) =>
+                            updateItem("platforms", i, "icon", v)
+                          }
                           label=""
                           className="flex-1"
                         />
                       </div>
                     </div>
 
-                    <Input label="নাম" value={p.name || ""} onChange={v => updateItem("platforms", i, "name", v)} />
-                    <Input label="ID" value={p.id || ""} onChange={v => updateItem("platforms", i, "id", v)} />
+                    <Input
+                      label="নাম"
+                      value={p.name || ""}
+                      onChange={(v) => updateItem("platforms", i, "name", v)}
+                    />
+                    <Input
+                      label="ID"
+                      value={p.id || ""}
+                      onChange={(v) => updateItem("platforms", i, "id", v)}
+                    />
                   </div>
 
                   <div className="mt-3">
@@ -319,27 +535,52 @@ const AdminChatbotSetup = () => {
                         <input
                           className="flex-1 rounded border px-3 py-1.5 text-sm"
                           value={f || ""}
-                          onChange={e => {
-                            const feats = (p.features || []).map((x, j) => j === fi ? e.target.value : x);
+                          onChange={(e) => {
+                            const feats = (p.features || []).map((x, j) =>
+                              j === fi ? e.target.value : x
+                            );
                             updateItem("platforms", i, "features", feats);
                           }}
                         />
-                        <button onClick={() => {
-                          const feats = (p.features || []).filter((_, j) => j !== fi);
-                          updateItem("platforms", i, "features", feats);
-                        }} className="p-1 text-red-500">
+                        <button
+                          onClick={() => {
+                            const feats = (p.features || []).filter(
+                              (_, j) => j !== fi
+                            );
+                            updateItem("platforms", i, "features", feats);
+                          }}
+                          className="p-1 text-red-500"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => updateItem("platforms", i, "features", [...(p.features || []), "নতুন ফিচার"])} className="mt-2 text-xs text-blue-600">
+                    <button
+                      onClick={() =>
+                        updateItem("platforms", i, "features", [
+                          ...(p.features || []),
+                          "নতুন ফিচার",
+                        ])
+                      }
+                      className="mt-2 text-xs text-blue-600"
+                    >
                       + ফিচার যোগ
                     </button>
                   </div>
                 </div>
               ))}
 
-              <button onClick={() => addItem("platforms", { id: "new", icon: "messenger", name: "New Platform", features: [] })} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50">
+              <button
+                onClick={() =>
+                  addItem("platforms", {
+                    id: "new",
+                    icon: "messenger",
+                    name: "New Platform",
+                    features: [],
+                  })
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50"
+              >
                 <Plus className="h-4 w-4" /> নতুন প্ল্যাটফর্ম
               </button>
             </div>
@@ -355,35 +596,68 @@ const AdminChatbotSetup = () => {
                 <div key={i} className="border rounded-lg p-4">
                   <div className="flex justify-between mb-2">
                     <h4>টাইপ #{i + 1}</h4>
-                    <button onClick={() => removeItem("chatbotTypes", i)} className="text-red-500">
+                    <button
+                      onClick={() => removeItem("chatbotTypes", i)}
+                      className="text-red-500"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
 
                   <div className="grid md:grid-cols-4 gap-3">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">টাইপ আইকন</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        টাইপ আইকন
+                      </label>
                       <div className="flex items-center gap-2">
                         <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
                           {renderIcon(t.icon, 6)}
                         </div>
                         <IconSelector
                           value={t.icon}
-                          onChange={v => updateItem("chatbotTypes", i, "icon", v)}
+                          onChange={(v) =>
+                            updateItem("chatbotTypes", i, "icon", v)
+                          }
                           label=""
                           className="flex-1"
                         />
                       </div>
                     </div>
 
-                    <Input label="টাইপ নাম" value={t.type || ""} onChange={v => updateItem("chatbotTypes", i, "type", v)} />
-                    <Input label="বিবরণ" value={t.description || ""} onChange={v => updateItem("chatbotTypes", i, "description", v)} />
-                    <Input label="ইউজ কেস" value={t.useCase || ""} onChange={v => updateItem("chatbotTypes", i, "useCase", v)} />
+                    <Input
+                      label="টাইপ নাম"
+                      value={t.type || ""}
+                      onChange={(v) => updateItem("chatbotTypes", i, "type", v)}
+                    />
+                    <Input
+                      label="বিবরণ"
+                      value={t.description || ""}
+                      onChange={(v) =>
+                        updateItem("chatbotTypes", i, "description", v)
+                      }
+                    />
+                    <Input
+                      label="ইউজ কেস"
+                      value={t.useCase || ""}
+                      onChange={(v) =>
+                        updateItem("chatbotTypes", i, "useCase", v)
+                      }
+                    />
                   </div>
                 </div>
               ))}
 
-              <button onClick={() => addItem("chatbotTypes", { icon: "faq", type: "New Bot Type", description: "", useCase: "" })} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50">
+              <button
+                onClick={() =>
+                  addItem("chatbotTypes", {
+                    icon: "faq",
+                    type: "New Bot Type",
+                    description: "",
+                    useCase: "",
+                  })
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50"
+              >
                 <Plus className="h-4 w-4" /> নতুন টাইপ
               </button>
             </div>
@@ -399,34 +673,65 @@ const AdminChatbotSetup = () => {
                 <div key={i} className="border rounded-lg p-4">
                   <div className="flex justify-between mb-3">
                     <h4>স্টেপ #{i + 1}</h4>
-                    <button onClick={() => removeItem("setupSteps", i)} className="text-red-500">
+                    <button
+                      onClick={() => removeItem("setupSteps", i)}
+                      className="text-red-500"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="grid md:grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">স্টেপ আইকন</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        স্টেপ আইকন
+                      </label>
                       <div className="flex items-center gap-2">
                         <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
                           {renderIcon(s.icon_name, 6)}
                         </div>
                         <ChatbotSetupIconSelector
                           value={s.icon_name}
-                          onChange={v => updateItem("setupSteps", i, "icon_name", v)}
+                          onChange={(v) =>
+                            updateItem("setupSteps", i, "icon_name", v)
+                          }
                           label=""
                           className="flex-1"
                         />
                       </div>
                     </div>
-                    <Input label="স্টেপ নম্বর" value={s.step || ""} onChange={v => updateItem("setupSteps", i, "step", v)} />
+                    <Input
+                      label="স্টেপ নম্বর"
+                      value={s.step || ""}
+                      onChange={(v) => updateItem("setupSteps", i, "step", v)}
+                    />
                   </div>
                   <div className="grid md:grid-cols-1 gap-3 mt-3">
-                    <Input label="শিরোনাম" value={s.title || ""} onChange={v => updateItem("setupSteps", i, "title", v)} />
-                    <Input label="বিবরণ" value={s.description || ""} onChange={v => updateItem("setupSteps", i, "description", v)} />
+                    <Input
+                      label="শিরোনাম"
+                      value={s.title || ""}
+                      onChange={(v) => updateItem("setupSteps", i, "title", v)}
+                    />
+                    <Input
+                      label="বিবরণ"
+                      value={s.description || ""}
+                      onChange={(v) =>
+                        updateItem("setupSteps", i, "description", v)
+                      }
+                    />
                   </div>
                 </div>
               ))}
-              <button onClick={() => addItem("setupSteps", { step: "নতুন", icon_name: "Requirement2Icon", title: "নতুন স্টেপ", description: "বিবরণ" })} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50">
+              <button
+                onClick={() =>
+                  addItem("setupSteps", {
+                    step: "নতুন",
+                    icon_name: "Requirement2Icon",
+                    title: "নতুন স্টেপ",
+                    description: "বিবরণ",
+                  })
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50"
+              >
                 <Plus className="h-4 w-4" /> নতুন স্টেপ
               </button>
             </div>
@@ -442,37 +747,69 @@ const AdminChatbotSetup = () => {
                 <div key={i} className="border rounded-lg p-4">
                   <div className="flex justify-between mb-2">
                     <h4>ক্যাটাগরি #{i + 1}</h4>
-                    <button onClick={() => removeItem("chatbotFeatures", i)} className="text-red-500">
+                    <button
+                      onClick={() => removeItem("chatbotFeatures", i)}
+                      className="text-red-500"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                  <Input label="ক্যাটাগরি" value={c.category || ""} onChange={v => updateItem("chatbotFeatures", i, "category", v)} />
+                  <Input
+                    label="ক্যাটাগরি"
+                    value={c.category || ""}
+                    onChange={(v) =>
+                      updateItem("chatbotFeatures", i, "category", v)
+                    }
+                  />
                   <div className="mt-3">
                     {(c.items || []).map((item, fi) => (
                       <div key={fi} className="flex gap-2 mt-1">
                         <input
                           className="flex-1 rounded border px-3 py-1.5 text-sm"
                           value={item || ""}
-                          onChange={e => {
-                            const items = (c.items || []).map((x, j) => j === fi ? e.target.value : x);
+                          onChange={(e) => {
+                            const items = (c.items || []).map((x, j) =>
+                              j === fi ? e.target.value : x
+                            );
                             updateItem("chatbotFeatures", i, "items", items);
                           }}
                         />
-                        <button onClick={() => {
-                          const items = (c.items || []).filter((_, j) => j !== fi);
-                          updateItem("chatbotFeatures", i, "items", items);
-                        }} className="p-1 text-red-500">
+                        <button
+                          onClick={() => {
+                            const items = (c.items || []).filter(
+                              (_, j) => j !== fi
+                            );
+                            updateItem("chatbotFeatures", i, "items", items);
+                          }}
+                          className="p-1 text-red-500"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => updateItem("chatbotFeatures", i, "items", [...(c.items || []), "নতুন আইটেম"])} className="mt-2 text-xs text-blue-600">
+                    <button
+                      onClick={() =>
+                        updateItem("chatbotFeatures", i, "items", [
+                          ...(c.items || []),
+                          "নতুন আইটেম",
+                        ])
+                      }
+                      className="mt-2 text-xs text-blue-600"
+                    >
                       + আইটেম যোগ
                     </button>
                   </div>
                 </div>
               ))}
-              <button onClick={() => addItem("chatbotFeatures", { category: "নতুন ক্যাটাগরি", items: [] })} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50">
+              <button
+                onClick={() =>
+                  addItem("chatbotFeatures", {
+                    category: "নতুন ক্যাটাগরি",
+                    items: [],
+                  })
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50"
+              >
                 <Plus className="h-4 w-4" /> নতুন ক্যাটাগরি
               </button>
             </div>
@@ -488,17 +825,40 @@ const AdminChatbotSetup = () => {
                 <div key={i} className="border rounded-lg p-4">
                   <div className="flex justify-between mb-2">
                     <h4>আইটেম #{i + 1}</h4>
-                    <button onClick={() => removeItem("designShowcase", i)} className="text-red-500">
+                    <button
+                      onClick={() => removeItem("designShowcase", i)}
+                      className="text-red-500"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="grid md:grid-cols-2 gap-3">
-                    <Input label="শিরোনাম" value={d.title || ""} onChange={v => updateItem("designShowcase", i, "title", v)} />
-                    <Input label="বিবরণ" value={d.description || ""} onChange={v => updateItem("designShowcase", i, "description", v)} />
+                    <Input
+                      label="শিরোনাম"
+                      value={d.title || ""}
+                      onChange={(v) =>
+                        updateItem("designShowcase", i, "title", v)
+                      }
+                    />
+                    <Input
+                      label="বিবরণ"
+                      value={d.description || ""}
+                      onChange={(v) =>
+                        updateItem("designShowcase", i, "description", v)
+                      }
+                    />
                   </div>
                 </div>
               ))}
-              <button onClick={() => addItem("designShowcase", { title: "নতুন ফিচার", description: "বিবরণ" })} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50">
+              <button
+                onClick={() =>
+                  addItem("designShowcase", {
+                    title: "নতুন ফিচার",
+                    description: "বিবরণ",
+                  })
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50"
+              >
                 <Plus className="h-4 w-4" /> নতুন আইটেম
               </button>
             </div>
@@ -513,44 +873,83 @@ const AdminChatbotSetup = () => {
               {(data.packages || []).map((pkg, i) => (
                 <div key={i} className="border rounded-lg p-5">
                   <div className="flex justify-between mb-4">
-                    <h4 className="text-lg font-semibold">{pkg.name || "Unnamed"}</h4>
+                    <h4 className="text-lg font-semibold">
+                      {pkg.name || "Unnamed"}
+                    </h4>
                     <div className="flex gap-2">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={!!pkg.popular} onChange={e => updateItem("packages", i, "popular", e.target.checked)} className="h-4 w-4" />
+                        <input
+                          type="checkbox"
+                          checked={!!pkg.popular}
+                          onChange={(e) =>
+                            updateItem(
+                              "packages",
+                              i,
+                              "popular",
+                              e.target.checked
+                            )
+                          }
+                          className="h-4 w-4"
+                        />
                         <span className="text-sm font-medium">জনপ্রিয়</span>
                       </label>
-                      <button onClick={() => removeItem("packages", i)} className="text-red-500">
+                      <button
+                        onClick={() => removeItem("packages", i)}
+                        className="text-red-500"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-                    <Input label="নাম" value={pkg.name || ""} onChange={v => updateItem("packages", i, "name", v)} />
-                    <Input label="মূল্য" value={pkg.price || ""} onChange={v => updateItem("packages", i, "price", v)} />
-                    <Input label="সময়কাল" value={pkg.duration || ""} onChange={v => updateItem("packages", i, "duration", v)} />
-                    <Input 
-                      label="অর্ডার লিংক (ঐচ্ছিক)" 
-                      value={pkg.orderLink || ""} 
-                      onChange={v => updateItem("packages", i, "orderLink", v)}
+                    <Input
+                      label="নাম"
+                      value={pkg.name || ""}
+                      onChange={(v) => updateItem("packages", i, "name", v)}
+                    />
+                    <Input
+                      label="মূল্য"
+                      value={pkg.price || ""}
+                      onChange={(v) => updateItem("packages", i, "price", v)}
+                    />
+                    <Input
+                      label="সময়কাল"
+                      value={pkg.duration || ""}
+                      onChange={(v) => updateItem("packages", i, "duration", v)}
+                    />
+                    <Input
+                      label="অর্ডার লিংক (ঐচ্ছিক)"
+                      value={pkg.orderLink || ""}
+                      onChange={(v) =>
+                        updateItem("packages", i, "orderLink", v)
+                      }
                       placeholder="https://example.com/order"
                       icon={<Link className="h-4 w-4 text-gray-400" />}
                     />
                   </div>
-                  
+
                   <div>
                     <div className="flex justify-between mb-2">
                       <label className="text-sm font-medium">ফিচারস</label>
-                      <button onClick={() => addPkgFeat(i)} className="text-xs text-blue-600">+ যোগ করুন</button>
+                      <button
+                        onClick={() => addPkgFeat(i)}
+                        className="text-xs text-blue-600"
+                      >
+                        + যোগ করুন
+                      </button>
                     </div>
                     {(pkg.features || []).map((f, fi) => (
                       <div key={fi} className="flex gap-2 mb-2">
                         <input
                           className="flex-1 rounded border px-3 py-1.5 text-sm"
                           value={f || ""}
-                          onChange={e => updatePkgFeat(i, fi, e.target.value)}
+                          onChange={(e) => updatePkgFeat(i, fi, e.target.value)}
                         />
-                        <button onClick={() => removePkgFeat(i, fi)} className="text-red-500">
+                        <button
+                          onClick={() => removePkgFeat(i, fi)}
+                          className="text-red-500"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -558,7 +957,10 @@ const AdminChatbotSetup = () => {
                   </div>
                 </div>
               ))}
-              <button onClick={addPkg} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50">
+              <button
+                onClick={addPkg}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-blue-400 py-2 text-blue-600 hover:bg-blue-50"
+              >
                 <Plus className="h-4 w-4" /> নতুন প্যাকেজ যোগ করুন
               </button>
             </div>
@@ -570,12 +972,272 @@ const AdminChatbotSetup = () => {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Input label="শিরোনাম" value={data.cta?.title || ""} onChange={v => updateSection("cta", { ...data.cta, title: v })} />
-              <Input label="বিবরণ" value={data.cta?.description || ""} onChange={v => updateSection("cta", { ...data.cta, description: v })} />
-              <Input label="প্রাথমিক CTA" value={data.cta?.ctaPrimary || ""} onChange={v => updateSection("cta", { ...data.cta, ctaPrimary: v })} />
-              <Input label="সেকেন্ডারি CTA" value={data.cta?.ctaSecondary || ""} onChange={v => updateSection("cta", { ...data.cta, ctaSecondary: v })} />
+              <Input
+                label="শিরোনাম"
+                value={data.cta?.title || ""}
+                onChange={(v) =>
+                  updateSection("cta", { ...data.cta, title: v })
+                }
+              />
+              <Input
+                label="বিবরণ"
+                value={data.cta?.description || ""}
+                onChange={(v) =>
+                  updateSection("cta", { ...data.cta, description: v })
+                }
+              />
+              <Input
+                label="প্রাথমিক CTA"
+                value={data.cta?.ctaPrimary || ""}
+                onChange={(v) =>
+                  updateSection("cta", { ...data.cta, ctaPrimary: v })
+                }
+              />
+              <Input
+                label="সেকেন্ডারি CTA"
+                value={data.cta?.ctaSecondary || ""}
+                onChange={(v) =>
+                  updateSection("cta", { ...data.cta, ctaSecondary: v })
+                }
+              />
             </div>
             <SaveBtn onClick={() => saveSection("cta")} />
+          </div>
+        );
+
+      case "seo":
+        return (
+          <div className="space-y-6">
+            {!seoData && (
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-blue-700">
+                <p>SEO ডেটা লোড হচ্ছে...</p>
+              </div>
+            )}
+
+            {seoData && (
+              <>
+                {/* ====== BASIC SEO ====== */}
+                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-blue-50 to-indigo-50">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <span className="text-xl">📝</span> মৌলিক SEO
+                  </h3>
+                  <div className="space-y-4">
+                    <Input
+                      label="Meta Title (60 অক্ষর)"
+                      value={seoData.meta_title || ""}
+                      onChange={(v) => updateSeoField("meta_title", v)}
+                    />
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Meta Description (160 অক্ষর)
+                      </label>
+                      <textarea
+                        value={seoData.meta_description || ""}
+                        onChange={(e) =>
+                          updateSeoField("meta_description", e.target.value)
+                        }
+                        className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                        rows="3"
+                      />
+                    </div>
+                    <Input
+                      label="Focus Keyword"
+                      value={seoData.focus_keyword || ""}
+                      onChange={(v) => updateSeoField("focus_keyword", v)}
+                    />
+                    <Input
+                      label="Meta Keywords"
+                      value={seoData.meta_keywords || ""}
+                      onChange={(v) => updateSeoField("meta_keywords", v)}
+                    />
+                  </div>
+                </div>
+
+                {/* ====== OPEN GRAPH ====== */}
+                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-purple-50 to-pink-50">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <span className="text-xl">🌐</span> Open Graph
+                  </h3>
+                  <div className="space-y-4">
+                    <Input
+                      label="OG Title"
+                      value={seoData.og_title || ""}
+                      onChange={(v) => updateSeoField("og_title", v)}
+                    />
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        OG Description
+                      </label>
+                      <textarea
+                        value={seoData.og_description || ""}
+                        onChange={(e) =>
+                          updateSeoField("og_description", e.target.value)
+                        }
+                        className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                        rows="2"
+                      />
+                    </div>
+                    <Input
+                      label="OG Image URL"
+                      value={seoData.og_image || ""}
+                      onChange={(v) => updateSeoField("og_image", v)}
+                    />
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <Input
+                        label="OG Type"
+                        value={seoData.og_type || "website"}
+                        onChange={(v) => updateSeoField("og_type", v)}
+                      />
+                      <Input
+                        label="OG Locale"
+                        value={seoData.og_locale || "bn_BD"}
+                        onChange={(v) => updateSeoField("og_locale", v)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ====== ADVANCED SEO ====== */}
+                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-green-50 to-emerald-50">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <span className="text-xl">⚙️</span> উন্নত SEO
+                  </h3>
+                  <div className="space-y-4">
+                    <Input
+                      label="Canonical URL"
+                      value={seoData.canonical_url || ""}
+                      onChange={(v) => updateSeoField("canonical_url", v)}
+                    />
+                    <Input
+                      label="Schema Type"
+                      value={seoData.schema_type || "SoftwareApplication"}
+                      onChange={(v) => updateSeoField("schema_type", v)}
+                    />
+                    <Input
+                      label="Twitter Card"
+                      value={seoData.twitter_card || "summary_large_image"}
+                      onChange={(v) => updateSeoField("twitter_card", v)}
+                    />
+                    <div className="grid md:grid-cols-2 gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={seoData.meta_robots_index !== false}
+                          onChange={(e) =>
+                            updateSeoField(
+                              "meta_robots_index",
+                              e.target.checked
+                            )
+                          }
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm font-medium">
+                          Meta Robots Index
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={seoData.meta_robots_follow !== false}
+                          onChange={(e) =>
+                            updateSeoField(
+                              "meta_robots_follow",
+                              e.target.checked
+                            )
+                          }
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm font-medium">
+                          Meta Robots Follow
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ====== SITEMAP ====== */}
+                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-orange-50 to-yellow-50">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                    <span className="text-xl">🗺️</span> Sitemap
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <Input
+                      label="Sitemap Priority (0-1)"
+                      type="number"
+                      value={seoData.sitemap_priority || 0.9}
+                      onChange={(v) =>
+                        updateSeoField("sitemap_priority", parseFloat(v))
+                      }
+                    />
+                    <Input
+                      label="Change Frequency"
+                      value={seoData.change_frequency || "weekly"}
+                      onChange={(v) => updateSeoField("change_frequency", v)}
+                    />
+                  </div>
+                </div>
+
+                {/* ====== FAQ SCHEMA ====== */}
+                <div className="rounded-lg border border-gray-200 p-5 bg-gradient-to-br from-cyan-50 to-blue-50">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <span className="text-xl">❓</span> FAQ Schema
+                    </h3>
+                    <button
+                      onClick={addFaqItem}
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 flex items-center gap-1"
+                    >
+                      <Plus className="h-4 w-4" /> নতুন FAQ যোগ করুন
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    {(seoData.faq_items || []).map((faq, idx) => (
+                      <div
+                        key={idx}
+                        className="border border-gray-200 rounded p-4 bg-white"
+                      >
+                        <div className="flex justify-between mb-3">
+                          <h4 className="font-medium text-gray-700">
+                            প্রশ্ন #{idx + 1}
+                          </h4>
+                          <button
+                            onClick={() => removeFaqItem(idx)}
+                            className="text-red-600 hover:bg-red-50 p-1 rounded"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <Input
+                          label="প্রশ্ন"
+                          value={faq.question || ""}
+                          onChange={(v) => updateFaqItem(idx, "question", v)}
+                        />
+                        <div className="mt-2">
+                          <label className="mb-1 block text-sm font-medium text-gray-700">
+                            উত্তর
+                          </label>
+                          <textarea
+                            value={faq.answer || ""}
+                            onChange={(e) =>
+                              updateFaqItem(idx, "answer", e.target.value)
+                            }
+                            className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                            rows="2"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <SaveBtn
+                  onClick={saveSeo}
+                  disabled={saving}
+                  label={saving ? "সেভ হচ্ছে..." : "SEO সেটিংস সেভ করুন"}
+                />
+              </>
+            )}
           </div>
         );
 
@@ -592,8 +1254,16 @@ const AdminChatbotSetup = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-6">
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-5 py-3 text-white shadow-lg ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
-          {toast.type === "success" ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg px-5 py-3 text-white shadow-lg ${
+            toast.type === "success" ? "bg-green-600" : "bg-red-600"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle className="h-5 w-5" />
+          ) : (
+            <XCircle className="h-5 w-5" />
+          )}
           {toast.msg}
         </div>
       )}
@@ -606,7 +1276,9 @@ const AdminChatbotSetup = () => {
               <Bot className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">চ্যাটবট সেটআপ ম্যানেজমেন্ট</h1>
+              <h1 className="text-2xl font-bold text-gray-800">
+                চ্যাটবট সেটআপ ম্যানেজমেন্ট
+              </h1>
               <p className="text-sm text-gray-600">সেকশন‑ভিত্তিক সেভ করুন</p>
             </div>
           </div>
@@ -639,13 +1311,13 @@ const AdminChatbotSetup = () => {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-2xl">
-                  {tabs.find(tab => tab.id === activeTab)?.icon}
+                  {tabs.find((tab) => tab.id === activeTab)?.icon}
                 </span>
                 <h2 className="text-xl font-bold text-gray-800">
-                  {tabs.find(tab => tab.id === activeTab)?.name}
+                  {tabs.find((tab) => tab.id === activeTab)?.name}
                 </h2>
               </div>
-              
+
               {renderTabContent()}
             </div>
           </div>
@@ -658,12 +1330,14 @@ const AdminChatbotSetup = () => {
 /* Reusable Components */
 const Input = ({ label, value, onChange, placeholder, icon }) => (
   <div>
-    <label className="mb-1 block text-sm font-medium text-gray-700">{label}</label>
+    <label className="mb-1 block text-sm font-medium text-gray-700">
+      {label}
+    </label>
     <div className="relative">
       <input
         type="text"
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
       />
@@ -676,12 +1350,13 @@ const Input = ({ label, value, onChange, placeholder, icon }) => (
   </div>
 );
 
-const SaveBtn = ({ onClick }) => (
+const SaveBtn = ({ onClick, disabled, label }) => (
   <button
     onClick={onClick}
-    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 py-2.5 font-medium text-white hover:shadow-md"
+    disabled={disabled}
+    className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 py-2.5 font-medium text-white hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
   >
-    <Save className="h-5 w-5" /> এই সেকশন সেভ করুন
+    <Save className="h-5 w-5" /> {label || "এই সেকশন সেভ করুন"}
   </button>
 );
 
